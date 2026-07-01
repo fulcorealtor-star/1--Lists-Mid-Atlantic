@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <title>1 Percent Lists Mid-Atlantic – Smart TV Pipeline Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest" defer></script>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+      :root {
+        --bg-main: #0B1829;
+        --bg-card: #112240;
+        --bg-kpi: #0d1f3c;
+        --accent-red: #C8102E;
+        --text-primary: #FFFFFF;
+        --text-muted: #94A3B8;
+        --border-color: #1E3A5F;
+        --status-green: #22C55E;
+        --status-yellow: #F59E0B;
+        --status-red: #EF4444;
+        --status-blue: #3B82F6;
+        --progress-track: #1E3A5F;
+      }
+
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+
+      body {
+        font-family: 'Inter', sans-serif;
+        background: var(--bg-main);
+        color: var(--text-primary);
+        overflow: hidden;
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .tabular-nums { font-variant-numeric: tabular-nums; }
+
+      /* Header */
+      .header-bar {
+        height: 70px;
+        min-height: 70px;
+        background: var(--bg-main);
+        border-bottom: 2px solid var(--accent-red);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 28px;
+        z-index: 10;
+      }
+
+      .brand-block { display: flex; align-items: center; gap: 6px; }
+      .brand-1pct { font-size: 28px; font-weight: 900; color: var(--accent-red); line-height: 1; }
+      .brand-name { font-size: 22px; font-weight: 700; color: var(--text-primary); line-height: 1; }
+      .brand-sub { font-size: 14px; font-weight: 500; color: var(--text-muted); letter-spacing: 0.2em; line-height: 1; margin-top: 2px; }
+
+      .header-center { font-size: 20px; font-weight: 700; letter-spacing: 0.3em; text-transform: uppercase; color: var(--text-primary); }
+
+      .header-right { display: flex; align-items: center; gap: 16px; text-align: right; }
+      .clock-time { font-size: 20px; font-weight: 700; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+      .clock-date { font-size: 13px; color: var(--text-muted); margin-top: 1px; }
+
+      .status-dot {
+        width: 10px; height: 10px; border-radius: 50%; background: var(--status-green);
+        animation: pulse-dot 2s ease-in-out infinite;
+      }
+      .status-dot.error { background: var(--status-red); }
+      @keyframes pulse-dot {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.4; transform: scale(0.7); }
+      }
+
+      .demo-badge {
+        background: var(--status-yellow);
+        color: #1a1a1a;
+        font-size: 10px;
+        font-weight: 800;
+        padding: 3px 10px;
+        border-radius: 4px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+      .demo-badge.hidden-badge { display: none; }
+      .demo-badge.error-badge {
+        background: var(--status-red);
+        color: #fff;
+      }
+
+      /* KPI Bar */
+      .kpi-bar {
+        height: 130px;
+        min-height: 130px;
+        display: flex;
+        gap: 12px;
+        padding: 10px 28px;
+        background: var(--bg-kpi);
+      }
+      .kpi-tile {
+        flex: 1;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-top: 3px solid var(--accent-red);
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 8px;
+        text-align: center;
+        gap: 4px;
+      }
+      .kpi-label {
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: var(--text-muted);
+      }
+      .kpi-value {
+        font-size: 32px;
+        font-weight: 800;
+        color: var(--text-primary);
+        font-variant-numeric: tabular-nums;
+        line-height: 1.1;
+      }
+      .kpi-sub {
+        font-size: 11px;
+        color: var(--text-muted);
+        font-weight: 400;
+      }
+
+      /* Deal Cards Area */
+      .cards-area {
+        flex: 1;
+        overflow: hidden;
+        padding: 8px 28px 0;
+        position: relative;
+      }
+      .cards-scroll-inner {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        padding-bottom: 10px;
+      }
+
+      .deal-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+        opacity: 0;
+        transform: translateY(18px);
+        transition: opacity 0.4s ease, transform 0.4s ease;
+      }
+      .deal-card.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .card-row { display: flex; justify-content: space-between; align-items: center; }
+
+      .card-address {
+        font-size: 15px; font-weight: 700; color: var(--text-primary);
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 68%;
+      }
+      .status-badge {
+        font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+        padding: 3px 10px; border-radius: 20px; color: #fff; white-space: nowrap;
+      }
+      .status-badge.status-active { background: var(--status-green); }
+      .status-badge.status-contingent { background: var(--status-yellow); color: #1a1a1a; }
+      .status-badge.status-at-risk { background: var(--status-red); }
+      .status-badge.status-closed { background: var(--status-blue); }
+      .status-badge.status-pending { background: var(--status-yellow); color: #1a1a1a; }
+
+      .card-client, .card-agent { font-size: 12px; color: var(--text-muted); }
+      .card-closing { font-size: 13px; color: var(--text-primary); }
+      .card-commission { font-size: 13px; font-weight: 700; color: var(--accent-red); }
+
+      .progress-container { width: 100%; }
+      .progress-label { font-size: 10px; color: var(--text-muted); margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+      .progress-track {
+        width: 100%; height: 7px; background: var(--progress-track); border-radius: 4px; overflow: hidden;
+      }
+      .progress-fill {
+        height: 100%; border-radius: 4px; transition: width 1s ease-out;
+      }
+
+      .card-notes {
+        font-size: 11px; color: var(--text-muted); font-style: italic;
+        display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+        overflow: hidden; line-height: 1.4;
+      }
+
+      /* Footer */
+      .footer-bar {
+        height: 36px;
+        min-height: 36px;
+        background: var(--bg-main);
+        border-top: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 28px;
+        font-size: 11px;
+        color: var(--text-muted);
+      }
+
+      /* Settings Modal */
+      .settings-btn {
+        position: fixed;
+        bottom: 44px;
+        left: 14px;
+        background: rgba(17,34,64,0.85);
+        border: 1px solid var(--border-color);
+        color: var(--text-muted);
+        font-size: 12px;
+        padding: 6px 14px;
+        border-radius: 6px;
+        cursor: pointer;
+        z-index: 50;
+        font-family: 'Inter', sans-serif;
+        transition: background 0.2s;
+      }
+      .settings-btn:hover { background: rgba(17,34,64,1); }
+
+      .modal-overlay {
+        position: fixed; inset: 0;
+        background: rgba(0,0,0,0.7);
+        display: none; align-items: center; justify-content: center;
+        z-index: 100;
+      }
+      .modal-overlay.active { display: flex; }
+
+      .modal-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 14px;
+        padding: 32px;
+        width: 580px;
+        max-width: 90vw;
+        position: relative;
+        box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+      }
+      .modal-title { font-size: 20px; font-weight: 700; margin-bottom: 20px; }
+      .modal-label { font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; display: block; }
+      .modal-input {
+        width: 100%; padding: 10px 14px; border-radius: 8px;
+        background: var(--bg-main); border: 1px solid var(--border-color);
+        color: var(--text-primary); font-family: 'Courier New', monospace; font-size: 13px;
+        outline: none;
+      }
+      .modal-input:focus { border-color: var(--accent-red); }
+      .modal-instructions { font-size: 12px; color: var(--text-muted); margin-top: 10px; line-height: 1.5; }
+      .modal-instructions .proxy-note {
+        color: #F59E0B;
+        font-weight: 600;
+        display: block;
+        margin-bottom: 8px;
+      }
+      .modal-buttons { display: flex; gap: 10px; margin-top: 22px; }
+      .btn-save {
+        background: var(--accent-red); color: #fff; border: none;
+        padding: 10px 22px; border-radius: 8px; font-weight: 700;
+        font-size: 14px; cursor: pointer; font-family: 'Inter', sans-serif;
+      }
+      .btn-save:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      .btn-demo {
+        background: transparent; color: var(--text-primary);
+        border: 1px solid var(--border-color);
+        padding: 10px 22px; border-radius: 8px; font-weight: 600;
+        font-size: 14px; cursor: pointer; font-family: 'Inter', sans-serif;
+      }
+      .modal-close {
+        position: absolute; top: 14px; right: 14px;
+        background: none; border: none; color: var(--text-muted);
+        cursor: pointer; font-size: 22px; line-height: 1; font-family: 'Inter', sans-serif;
+      }
+      .refreshing-indicator {
+        font-size: 11px; color: var(--status-yellow); font-weight: 600; display: none;
+      }
+      .refreshing-indicator.active { display: inline; }
+    </style>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              navy: { main: '#0B1829', card: '#112240', kpi: '#0d1f3c' },
+              accent: '#C8102E',
+              border: '#1E3A5F',
+              muted: '#94A3B8'
+            }
+          }
+        }
+      };
+    </script>
+</head>
+<body data-id="0">
+    <app-icon data-id="1" hidden data-icon="layout-dashboard" data-palette="Red"></app-icon>
+
+    <!-- HEADER BAR -->
+    <header data-id="2" class="header-bar" id="header-g7x2">
+      <div data-id="3" class="brand-block">
+        <div data-id="4">
+          <div data-id="5" style="display:flex;align-items:baseline;gap:6px;">
+            <span data-id="6" class="brand-1pct">1%</span>
+            <span data-id="7" class="brand-name">PERCENT LISTS</span>
+          </div>
+          <div data-id="8" class="brand-sub">MID-ATLANTIC</div>
+        </div>
+      </div>
+      <div data-id="9" class="header-center" id="header-title-v9k1">PIPELINE DASHBOARD</div>
+      <div data-id="10" class="header-right">
+        <span data-id="11" class="refreshing-indicator" id="refresh-ind-m3n4">⟳ Refreshing...</span>
+        <span data-id="12" class="demo-badge" id="demo-badge-q8w2">DEMO MODE</span>
+        <div data-id="13">
+          <div data-id="14" class="clock-time tabular-nums" id="clock-time-f4j1">12:30:00 PM</div>
+          <div data-id="15" class="clock-date" id="clock-date-a2s9">Mon, Jun 22, 2026</div>
+        </div>
+        <div data-id="16" class="status-dot" id="status-dot-k7e3"></div>
+      </div>
+    </header>
+
+    <!-- KPI BAR -->
+    <section data-id="17" class="kpi-bar" id="kpi-bar-r5t8">
+      <div data-id="18" class="kpi-tile" id="kpi-vol-n1m5">
+        <div data-id="19" class="kpi-label">PENDING VOLUME</div>
+        <div data-id="20" class="kpi-value tabular-nums" id="kpi-vol-val">$0</div>
+        <div data-id="21" class="kpi-sub">Active pipeline value</div>
+      </div>
+      <div data-id="22" class="kpi-tile" id="kpi-comm-p3q7">
+        <div data-id="23" class="kpi-label">PROJ. COMMISSION</div>
+        <div data-id="24" class="kpi-value tabular-nums" id="kpi-comm-val">$0</div>
+        <div data-id="25" class="kpi-sub">Est. gross at 1%</div>
+      </div>
+      <div data-id="26" class="kpi-tile" id="kpi-month-w6r2">
+        <div data-id="27" class="kpi-label">CLOSINGS THIS MONTH</div>
+        <div data-id="28" class="kpi-value tabular-nums" id="kpi-month-val">0</div>
+        <div data-id="29" class="kpi-sub" id="kpi-month-sub">June 2026</div>
+      </div>
+      <div data-id="30" class="kpi-tile" id="kpi-30d-y8u4">
+        <div data-id="31" class="kpi-label">NEXT 30 DAYS</div>
+        <div data-id="32" class="kpi-value tabular-nums" id="kpi-30d-val">0</div>
+        <div data-id="33" class="kpi-sub">Upcoming closings</div>
+      </div>
+      <div data-id="34" class="kpi-tile" id="kpi-avg-z1v6">
+        <div data-id="35" class="kpi-label">AVG DAYS TO CLOSE</div>
+        <div data-id="36" class="kpi-value tabular-nums" id="kpi-avg-val">0 days</div>
+        <div data-id="37" class="kpi-sub">Days remaining avg</div>
+      </div>
+      <div data-id="38" class="kpi-tile" id="kpi-cnt-b9x3">
+        <div data-id="39" class="kpi-label">PIPELINE COUNT</div>
+        <div data-id="40" class="kpi-value tabular-nums" id="kpi-cnt-val">0</div>
+        <div data-id="41" class="kpi-sub">Total active deals</div>
+      </div>
+    </section>
+
+    <!-- DEAL CARDS AREA -->
+    <section data-id="42" class="cards-area" id="cards-area-c4d7">
+      <div data-id="43" class="cards-scroll-inner" id="cards-container-e6f8"></div>
+    </section>
+
+    <!-- FOOTER BAR -->
+    <footer data-id="44" class="footer-bar" id="footer-h2g5">
+      <div data-id="45" id="footer-updated-j3k9">Last updated: --</div>
+      <div data-id="46">1 Percent Lists Mid-Atlantic • Pipeline Dashboard &nbsp;•&nbsp; Made by Copilot</div>
+      <div data-id="47" id="footer-refresh-l5m1">Next refresh in 10:00</div>
+    </footer>
+
+    <!-- SETTINGS BUTTON -->
+    <button data-id="48" class="settings-btn" id="settings-btn-o7p4">⚙ Settings</button>
+
+    <!-- SETTINGS MODAL -->
+    <div data-id="49" class="modal-overlay" id="modal-overlay-s1t6">
+      <div data-id="50" class="modal-card">
+        <button data-id="51" class="modal-close" id="modal-close-u3v8">✕</button>
+        <div data-id="52" class="modal-title">Dashboard Settings</div>
+        <label data-id="53" class="modal-label" for="sheet-url-input">Google Sheet CSV URL</label>
+        <input data-id="54" type="text" class="modal-input" id="sheet-url-input-w5x2"
+          placeholder="https://docs.google.com/spreadsheets/d/YOUR_ID/pub?gid=0&single=true&output=csv" />
+        <div data-id="55" class="modal-instructions">
+          <span data-id="56" class="proxy-note">Note: If your dashboard is opened as a local file, a proxy server is used to load your sheet. This is normal and secure.</span>
+          In Google Sheets: <strong data-id="57">File → Share → Publish to web</strong> → select your deals sheet tab → select <em data-id="58">"Comma-separated values (.csv)"</em> → click Publish → copy the URL. The correct URL will contain <code data-id="59" style="background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px;">output=csv</code> at the end.
+        </div>
+        <div data-id="60" id="modal-status-msg" style="display:none; font-size:13px; margin-top:12px; padding:10px 14px; border-radius:8px; background:rgba(0,0,0,0.3); line-height:1.5;"></div>
+        <div data-id="61" class="modal-buttons">
+          <button data-id="62" class="btn-save" id="btn-save-y7z9">Connect &amp; Load Data</button>
+          <button data-id="63" class="btn-demo" id="btn-demo-a1b3">Use Demo Data</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+    (function() {
+      'use strict';
+
+      // --- Icons (progressive enhancement) ---
+      if (typeof lucide !== "undefined" && typeof lucide.createIcons === "function") {
+        lucide.createIcons();
+      }
+
+      // --- DEMO DATA ---
+      const DEMO_DATA = [
+        {"address":"1842 Harford Rd, Bel Air, MD 21014","client":"Marcus & Jennifer Thornton","agent":"Sarah Mitchell","status":"Active","closing_date":"2026-06-27","list_price":389000,"commission_pct":0.01,"stage":"Clear to Close","notes":"Buyer financing confirmed. Final walk-through scheduled June 25th."},
+        {"address":"304 Chesapeake Blvd, Edgewood, MD 21040","client":"David Kimura","agent":"Anthony DeRose","status":"Contingent","closing_date":"2026-07-08","list_price":425000,"commission_pct":0.01,"stage":"Appraisal","notes":"Appraisal came in at value. Waiting on lender final approval."},
+        {"address":"715 Tollgate Rd, Bel Air, MD 21014","client":"Patricia & Robert Simms","agent":"Linda Park","status":"Active","closing_date":"2026-07-15","list_price":512000,"commission_pct":0.01,"stage":"Inspection Period","notes":"Minor repairs requested. Seller agreed to $2,500 credit."},
+        {"address":"2218 Churchville Rd, Churchville, MD 21028","client":"The Nguyen Family","agent":"Sarah Mitchell","status":"At Risk","closing_date":"2026-07-03","list_price":365000,"commission_pct":0.01,"stage":"Under Contract","notes":"Financing contingency concern. Buyer switching lenders."},
+        {"address":"88 Longview Dr, Forest Hill, MD 21050","client":"Casey Reynolds","agent":"Tom Greer","status":"Contingent","closing_date":"2026-07-22","list_price":298000,"commission_pct":0.01,"stage":"Inspection Period","notes":"Home inspection complete. Awaiting radon re-test results."},
+        {"address":"1124 Prospect Mill Rd, Bel Air, MD 21015","client":"James Holloway","agent":"Anthony DeRose","status":"Active","closing_date":"2026-07-29","list_price":575000,"commission_pct":0.01,"stage":"Under Contract","notes":"Luxury listing. Buyer pre-approved. Strong contract, no contingencies."},
+        {"address":"3301 Level Rd, Jarrettsville, MD 21084","client":"Mr. & Mrs. Caldwell","agent":"Linda Park","status":"Active","closing_date":"2026-08-05","list_price":449000,"commission_pct":0.01,"stage":"Contract Received","notes":"New contract received this week. Title ordered."},
+        {"address":"619 Winters Run Rd, Bel Air, MD 21014","client":"Olivia Grant","agent":"Sarah Mitchell","status":"Closed","closing_date":"2026-06-10","list_price":332000,"commission_pct":0.01,"stage":"Closed","notes":"Successfully closed! Commission disbursed."},
+        {"address":"204 Gateway Dr, Aberdeen, MD 21001","client":"Franklin & Diana Osei","agent":"Tom Greer","status":"Active","closing_date":"2026-08-12","list_price":385000,"commission_pct":0.01,"stage":"Contract Received","notes":"FHA loan. Waiting on initial disclosure acknowledgments."},
+        {"address":"1509 Emmorton Rd, Bel Air, MD 21015","client":"The Reyes Family","agent":"Anthony DeRose","status":"Contingent","closing_date":"2026-08-19","list_price":469000,"commission_pct":0.01,"stage":"Appraisal","notes":"Appraisal ordered. Home sale contingency in place — buyer's home listed."}
+      ];
+
+      // --- STAGE MAP ---
+      const STAGE_MAP = {
+        'contract received': 15,
+        'under contract': 30,
+        'inspection period': 45,
+        'appraisal': 60,
+        'clear to close': 80,
+        'closed': 100
+      };
+
+      function getProgressColor(pct) {
+        if (pct >= 100) return '#3B82F6';
+        if (pct >= 80) return '#22C55E';
+        if (pct >= 46) return '#F59E0B';
+        return '#C8102E';
+      }
+
+      function getStatusClass(status) {
+        const s = (status || '').toLowerCase().trim();
+        if (s === 'active') return 'status-active';
+        if (s === 'contingent') return 'status-contingent';
+        if (s === 'at risk') return 'status-at-risk';
+        if (s === 'closed') return 'status-closed';
+        if (s === 'pending') return 'status-pending';
+        return 'status-active';
+      }
+
+      // --- FORMATTING ---
+      const currFmt = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
+      function fmtVolume(val) {
+        if (val >= 1000000) return '$' + (val / 1000000).toFixed(2) + 'M';
+        return currFmt.format(val);
+      }
+
+      function fmtDate(dateStr) {
+        if (!dateStr) return '—';
+        const d = parseDate(dateStr);
+        if (!d || isNaN(d.getTime())) return '—';
+        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      }
+
+      function parseDate(str) {
+        if (!str) return null;
+        str = String(str).trim();
+        // MM/DD/YYYY
+        let m = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+        if (m) return new Date(parseInt(m[3]), parseInt(m[1]) - 1, parseInt(m[2]));
+        // YYYY-MM-DD
+        m = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+        if (m) return new Date(parseInt(m[1]), parseInt(m[2]) - 1, parseInt(m[3]));
+        const d = new Date(str);
+        return isNaN(d.getTime()) ? null : d;
+      }
+
+      function parsePrice(val) {
+        if (typeof val === 'number') return val;
+        if (!val) return 0;
+        return parseFloat(String(val).replace(/[$,\s]/g, '')) || 0;
+      }
+
+      function parseCommission(val) {
+        if (typeof val === 'number') {
+          return val > 1 ? val / 100 : val;
+        }
+        if (!val) return 0.01;
+        let n = parseFloat(String(val).replace(/[%$,\s]/g, ''));
+        if (isNaN(n)) return 0.01;
+        return n > 1 ? n / 100 : n;
+      }
+
+      // --- CSV PARSER ---
+      function parseCSV(text) {
+        const lines = [];
+        let current = '';
+        let inQuotes = false;
+        for (let i = 0; i < text.length; i++) {
+          const ch = text[i];
+          if (ch === '"') {
+            if (inQuotes && i + 1 < text.length && text[i + 1] === '"') {
+              current += '"';
+              i++;
+            } else {
+              inQuotes = !inQuotes;
+            }
+          } else if ((ch === '\n' || ch === '\r') && !inQuotes) {
+            if (current.length > 0 || lines.length > 0) {
+              lines.push(current);
+              current = '';
+            }
+            if (ch === '\r' && i + 1 < text.length && text[i + 1] === '\n') i++;
+          } else {
+            current += ch;
+          }
+        }
+        if (current.length > 0) lines.push(current);
+
+        if (lines.length < 2) return [];
+
+        function splitRow(line) {
+          const fields = [];
+          let field = '';
+          let inQ = false;
+          for (let i = 0; i < line.length; i++) {
+            const c = line[i];
+            if (c === '"') {
+              if (inQ && i + 1 < line.length && line[i + 1] === '"') {
+                field += '"';
+                i++;
+              } else {
+                inQ = !inQ;
+              }
+            } else if (c === ',' && !inQ) {
+              fields.push(field.trim());
+              field = '';
+            } else {
+              field += c;
+            }
+          }
+          fields.push(field.trim());
+          return fields;
+        }
+
+        const headers = splitRow(lines[0]).map(h => h.toLowerCase().replace(/[^a-z0-9_]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, ''));
+        const data = [];
+
+        const colMap = {};
+        const aliases = {
+          address: ['address'],
+          client: ['client', 'client_name'],
+          agent: ['agent'],
+          status: ['status'],
+          closing_date: ['closing_date', 'closing_date_'],
+          list_price: ['list_price'],
+          commission_pct: ['commission_pct', 'commission_', 'commission'],
+          stage: ['stage'],
+          notes: ['notes']
+        };
+        for (const [key, names] of Object.entries(aliases)) {
+          for (const name of names) {
+            const idx = headers.indexOf(name);
+            if (idx >= 0) { colMap[key] = idx; break; }
+          }
+          if (colMap[key] === undefined) {
+            const idx = headers.findIndex(h => h.includes(key));
+            if (idx >= 0) colMap[key] = idx;
+          }
+        }
+
+        for (let i = 1; i < lines.length; i++) {
+          const fields = splitRow(lines[i]);
+          if (fields.length < 2) continue;
+          const row = {};
+          row.address = fields[colMap.address] || '';
+          row.client = fields[colMap.client] || '';
+          row.agent = fields[colMap.agent] || '';
+          row.status = fields[colMap.status] || 'Active';
+          row.closing_date = fields[colMap.closing_date] || '';
+          row.list_price = parsePrice(fields[colMap.list_price]);
+          row.commission_pct = parseCommission(fields[colMap.commission_pct]);
+          row.stage = fields[colMap.stage] || 'Contract Received';
+          row.notes = fields[colMap.notes] || '';
+          if (row.address) data.push(row);
+        }
+        return data;
+      }
+
+      // --- SMART FETCH HELPER WITH CORS PROXY FALLBACK ---
+      async function fetchCSVText(url, statusMsgEl) {
+        // Attempt 1: direct fetch
+        try {
+          const r = await fetch(url, { cache: 'no-store' });
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          const t = await r.text();
+          if (t && t.trim().length > 0) return t;
+          throw new Error('Empty response');
+        } catch (e1) {
+          console.warn('[Fetch] Direct fetch failed:', e1.message, '— trying proxy...');
+          if (statusMsgEl) {
+            statusMsgEl.style.display = 'block';
+            statusMsgEl.style.color = '#F59E0B';
+            statusMsgEl.textContent = '⟳ Direct connection blocked, trying proxy...';
+          }
+          // Attempt 2: corsproxy.io
+          try {
+            const proxy1 = 'https://corsproxy.io/?' + encodeURIComponent(url);
+            const r2 = await fetch(proxy1, { cache: 'no-store' });
+            if (!r2.ok) throw new Error('HTTP ' + r2.status);
+            const t2 = await r2.text();
+            if (t2 && t2.trim().length > 0) return t2;
+            throw new Error('Empty response');
+          } catch (e2) {
+            console.warn('[Fetch] Proxy 1 (corsproxy.io) failed:', e2.message, '— trying alternate proxy...');
+            if (statusMsgEl) {
+              statusMsgEl.style.display = 'block';
+              statusMsgEl.style.color = '#F59E0B';
+              statusMsgEl.textContent = '⟳ Trying alternate proxy...';
+            }
+            // Attempt 3: allorigins
+            try {
+              const proxy2 = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
+              const r3 = await fetch(proxy2, { cache: 'no-store' });
+              if (!r3.ok) throw new Error('HTTP ' + r3.status);
+              const t3 = await r3.text();
+              if (t3 && t3.trim().length > 0) return t3;
+              throw new Error('Empty response');
+            } catch (e3) {
+              console.error('[Fetch] All 3 attempts failed:', e3.message);
+              throw new Error('Could not reach your Google Sheet. Please confirm it is published as CSV (File → Share → Publish to web → CSV format).');
+            }
+          }
+        }
+      }
+
+      // --- STATE ---
+      let deals = [];
+      let usingDemo = true;
+      let connectionError = false;
+      let refreshCountdown = 10 * 60;
+      let scrollY = 0;
+      let scrollPaused = false;
+      let scrollPauseTimeout = null;
+      let autoScrollInterval = null;
+      let lastUpdateTime = null;
+
+      // --- DOM REFS ---
+      const clockTimeEl = document.getElementById('clock-time-f4j1');
+      const clockDateEl = document.getElementById('clock-date-a2s9');
+      const statusDotEl = document.getElementById('status-dot-k7e3');
+      const demoBadgeEl = document.getElementById('demo-badge-q8w2');
+      const refreshIndEl = document.getElementById('refresh-ind-m3n4');
+      const cardsContainer = document.getElementById('cards-container-e6f8');
+      const cardsArea = document.getElementById('cards-area-c4d7');
+      const footerUpdated = document.getElementById('footer-updated-j3k9');
+      const footerRefresh = document.getElementById('footer-refresh-l5m1');
+      const settingsBtn = document.getElementById('settings-btn-o7p4');
+      const modalOverlay = document.getElementById('modal-overlay-s1t6');
+      const modalClose = document.getElementById('modal-close-u3v8');
+      const sheetUrlInput = document.getElementById('sheet-url-input-w5x2');
+      const btnSave = document.getElementById('btn-save-y7z9');
+      const btnDemo = document.getElementById('btn-demo-a1b3');
+
+      // --- CLOCK ---
+      function updateClock() {
+        const now = new Date();
+        clockTimeEl.textContent = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+        clockDateEl.textContent = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+      }
+      setInterval(updateClock, 1000);
+      updateClock();
+
+      // --- COUNTDOWN ---
+      function updateCountdown() {
+        refreshCountdown--;
+        if (refreshCountdown <= 0) {
+          refreshCountdown = 10 * 60;
+          loadData();
+        }
+        const m = Math.floor(refreshCountdown / 60);
+        const s = refreshCountdown % 60;
+        footerRefresh.textContent = 'Next refresh in ' + m + ':' + String(s).padStart(2, '0');
+      }
+      setInterval(updateCountdown, 1000);
+
+      // --- KPI COUNT-UP ANIMATION ---
+      function animateValue(el, start, end, duration, formatter) {
+        const startTime = performance.now();
+        function step(now) {
+          const elapsed = now - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          const eased = 1 - Math.pow(1 - progress, 3);
+          const current = Math.round(start + (end - start) * eased);
+          el.textContent = formatter(current);
+          if (progress < 1) requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
+      }
+
+      // --- UPDATE BADGE STATE ---
+      function updateBadgeState() {
+        if (connectionError) {
+          demoBadgeEl.className = 'demo-badge error-badge';
+          demoBadgeEl.textContent = 'CONNECTION ERROR';
+        } else if (usingDemo) {
+          demoBadgeEl.className = 'demo-badge';
+          demoBadgeEl.textContent = 'DEMO MODE';
+        } else {
+          demoBadgeEl.className = 'demo-badge hidden-badge';
+        }
+      }
+
+      // --- COMPUTE KPIs ---
+      function computeKPIs() {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const in30 = new Date(today);
+        in30.setDate(in30.getDate() + 30);
+
+        const nonClosed = deals.filter(d => (d.status || '').toLowerCase() !== 'closed');
+        const pendingVolume = nonClosed.reduce((sum, d) => sum + d.list_price, 0);
+        const projCommission = nonClosed.reduce((sum, d) => sum + (d.list_price * d.commission_pct), 0);
+
+        let closingsThisMonth = 0;
+        let closingsNext30 = 0;
+        let daysToCloseSum = 0;
+        let daysToCloseCount = 0;
+
+        const currentMonth = today.getMonth();
+        const currentYear = today.getFullYear();
+
+        deals.forEach(d => {
+          const cd = parseDate(d.closing_date);
+          if (!cd) return;
+          if (cd.getMonth() === currentMonth && cd.getFullYear() === currentYear) closingsThisMonth++;
+          if (cd >= today && cd <= in30) closingsNext30++;
+        });
+
+        nonClosed.forEach(d => {
+          const cd = parseDate(d.closing_date);
+          if (!cd) return;
+          if (cd > today) {
+            const diff = Math.ceil((cd - today) / (1000 * 60 * 60 * 24));
+            daysToCloseSum += diff;
+            daysToCloseCount++;
+          }
+        });
+
+        const avgDays = daysToCloseCount > 0 ? Math.round(daysToCloseSum / daysToCloseCount) : 0;
+
+        const volEl = document.getElementById('kpi-vol-val');
+        const commEl = document.getElementById('kpi-comm-val');
+        const monthEl = document.getElementById('kpi-month-val');
+        const d30El = document.getElementById('kpi-30d-val');
+        const avgEl = document.getElementById('kpi-avg-val');
+        const cntEl = document.getElementById('kpi-cnt-val');
+
+        animateValue(volEl, 0, pendingVolume, 1200, fmtVolume);
+        animateValue(commEl, 0, projCommission, 1200, v => currFmt.format(v));
+        animateValue(monthEl, 0, closingsThisMonth, 1200, v => String(v));
+        animateValue(d30El, 0, closingsNext30, 1200, v => String(v));
+        animateValue(avgEl, 0, avgDays, 1200, v => v + ' days');
+        animateValue(cntEl, 0, deals.length, 1200, v => String(v));
+
+        const monthSub = document.getElementById('kpi-month-sub');
+        const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+        monthSub.textContent = monthNames[currentMonth] + ' ' + currentYear;
+
+        console.log('[KPIs] Volume:', fmtVolume(pendingVolume), '| Commission:', currFmt.format(projCommission),
+          '| This Month:', closingsThisMonth, '| Next 30:', closingsNext30, '| Avg Days:', avgDays, '| Count:', deals.length);
+      }
+
+      // --- RENDER CARDS ---
+      function renderCards() {
+        const sorted = [...deals].sort((a, b) => {
+          const da = parseDate(a.closing_date);
+          const db = parseDate(b.closing_date);
+          if (!da && !db) return 0;
+          if (!da) return 1;
+          if (!db) return -1;
+          return da - db;
+        });
+
+        cardsContainer.innerHTML = '';
+
+        sorted.forEach((deal, idx) => {
+          const card = document.createElement('div');
+          card.className = 'deal-card';
+
+          const statusKey = (deal.status || 'Active').toLowerCase().replace(/\s+/g, '-');
+          const statusColor = {
+            'active': '#22C55E',
+            'contingent': '#F59E0B',
+            'at-risk': '#EF4444',
+            'closed': '#3B82F6',
+            'pending': '#F59E0B'
+          }[statusKey] || '#22C55E';
+
+          card.style.borderLeft = '4px solid ' + statusColor;
+
+          const stageKey = (deal.stage || '').toLowerCase().trim();
+          const progressPct = STAGE_MAP[stageKey] || 15;
+          const progressCol = getProgressColor(progressPct);
+
+          const closingStr = deal.closing_date ? 'Closes: ' + fmtDate(deal.closing_date) : 'No date set';
+          const commVal = deal.list_price * deal.commission_pct;
+
+          card.innerHTML =
+            '<div class="card-row">' +
+              '<span class="card-address" title="' + escHtml(deal.address) + '">' + escHtml(deal.address) + '</span>' +
+              '<span class="status-badge ' + getStatusClass(deal.status) + '">' + escHtml((deal.status || 'Active').toUpperCase()) + '</span>' +
+            '</div>' +
+            '<div class="card-row">' +
+              '<span class="card-client">' + escHtml(deal.client) + '</span>' +
+              '<span class="card-agent">' + escHtml(deal.agent) + '</span>' +
+            '</div>' +
+            '<div class="card-row">' +
+              '<span class="card-closing">' + closingStr + '</span>' +
+              '<span class="card-commission">' + currFmt.format(commVal) + '</span>' +
+            '</div>' +
+            '<div class="progress-container">' +
+              '<div class="progress-label">' + escHtml(deal.stage || 'Contract Received') + ' — ' + progressPct + '%</div>' +
+              '<div class="progress-track"><div class="progress-fill" style="width:0%;background:' + progressCol + '"></div></div>' +
+            '</div>' +
+            (deal.notes ? '<div class="card-notes">' + escHtml(deal.notes) + '</div>' : '');
+
+          cardsContainer.appendChild(card);
+
+          setTimeout(() => {
+            card.classList.add('visible');
+            const fill = card.querySelector('.progress-fill');
+            if (fill) fill.style.width = progressPct + '%';
+          }, 80 + idx * 50);
+        });
+
+        scrollY = 0;
+        cardsArea.scrollTop = 0;
+      }
+
+      function escHtml(str) {
+        const d = document.createElement('div');
+        d.textContent = str || '';
+        return d.innerHTML;
+      }
+
+      // --- AUTO SCROLL ---
+      function startAutoScroll() {
+        if (autoScrollInterval) clearInterval(autoScrollInterval);
+        let atBottom = false;
+        let pauseTimer = 0;
+
+        autoScrollInterval = setInterval(() => {
+          if (scrollPaused) return;
+
+          const scrollable = cardsArea;
+          const inner = cardsContainer;
+          const maxScroll = inner.scrollHeight - scrollable.clientHeight;
+
+          if (maxScroll <= 0) return;
+
+          if (atBottom) {
+            pauseTimer++;
+            if (pauseTimer > 1) {
+              scrollable.scrollTop = 0;
+              scrollY = 0;
+              atBottom = false;
+              pauseTimer = 0;
+            }
+            return;
+          }
+
+          scrollY += 30;
+          if (scrollY >= maxScroll) {
+            scrollY = maxScroll;
+            atBottom = true;
+            pauseTimer = 0;
+          }
+          scrollable.scrollTo({ top: scrollY, behavior: 'smooth' });
+        }, 2000);
+      }
+      startAutoScroll();
+
+      document.addEventListener('keydown', function() {
+        scrollPaused = true;
+        if (scrollPauseTimeout) clearTimeout(scrollPauseTimeout);
+        scrollPauseTimeout = setTimeout(() => { scrollPaused = false; }, 30000);
+      });
+
+      // --- DATA LOADING (uses fetchCSVText with proxy fallback) ---
+      async function loadData() {
+        const savedUrl = localStorage.getItem('gsheet_csv_url');
+        refreshIndEl.classList.add('active');
+
+        if (savedUrl) {
+          try {
+            console.log('[Data] Fetching from:', savedUrl);
+            const text = await fetchCSVText(savedUrl, null);
+            const parsed = parseCSV(text);
+            if (parsed.length > 0) {
+              deals = parsed;
+              usingDemo = false;
+              connectionError = false;
+              statusDotEl.classList.remove('error');
+              console.log('[Data] Loaded', deals.length, 'deals from Google Sheet');
+            } else {
+              throw new Error('No data parsed');
+            }
+          } catch (err) {
+            console.warn('[Data] Fetch error:', err.message, '— falling back');
+            statusDotEl.classList.add('error');
+            connectionError = true;
+            if (deals.length === 0) {
+              deals = DEMO_DATA;
+              usingDemo = true;
+            }
+          }
+        } else {
+          deals = DEMO_DATA;
+          usingDemo = true;
+          connectionError = false;
+          statusDotEl.classList.remove('error');
+          console.log('[Data] Using demo data —', deals.length, 'deals');
+        }
+
+        updateBadgeState();
+        computeKPIs();
+        renderCards();
+
+        lastUpdateTime = new Date();
+        footerUpdated.textContent = 'Last updated: ' + lastUpdateTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+        refreshCountdown = 10 * 60;
+
+        setTimeout(() => { refreshIndEl.classList.remove('active'); }, 1500);
+      }
+
+      // --- SETTINGS MODAL ---
+      settingsBtn.addEventListener('click', function() {
+        const savedUrl = localStorage.getItem('gsheet_csv_url') || '';
+        sheetUrlInput.value = savedUrl;
+        const statusMsg = document.getElementById('modal-status-msg');
+        statusMsg.style.display = 'none';
+        statusMsg.textContent = '';
+        modalOverlay.classList.add('active');
+      });
+
+      modalClose.addEventListener('click', function() {
+        modalOverlay.classList.remove('active');
+      });
+
+      modalOverlay.addEventListener('click', function(e) {
+        if (e.target === modalOverlay) modalOverlay.classList.remove('active');
+      });
+
+      // --- Save & Refresh with in-modal connection test (uses fetchCSVText) ---
+      btnSave.addEventListener('click', async function() {
+        const url = sheetUrlInput.value.trim();
+        const statusMsg = document.getElementById('modal-status-msg');
+
+        if (!url) {
+          statusMsg.style.display = 'block';
+          statusMsg.style.color = '#EF4444';
+          statusMsg.textContent = '⚠ Please paste your Google Sheet CSV URL first.';
+          return;
+        }
+
+        if (!url.includes('output=csv') && !url.includes('format=csv')) {
+          statusMsg.style.display = 'block';
+          statusMsg.style.color = '#F59E0B';
+          statusMsg.textContent = '⚠ URL may be wrong. It should contain "output=csv". Go to File → Share → Publish to web → CSV format.';
+        }
+
+        // Show loading
+        btnSave.disabled = true;
+        btnSave.textContent = 'Testing connection...';
+        statusMsg.style.display = 'block';
+        statusMsg.style.color = '#94A3B8';
+        statusMsg.textContent = '⟳ Connecting to Google Sheet...';
+
+        try {
+          const text = await fetchCSVText(url, statusMsg);
+          const parsed = parseCSV(text);
+          if (parsed.length === 0) throw new Error('No deals found. Check your sheet has data rows and correct column headers.');
+
+          // Success!
+          localStorage.setItem('gsheet_csv_url', url);
+          statusMsg.style.display = 'block';
+          statusMsg.style.color = '#22C55E';
+          statusMsg.textContent = '✓ Connected! Found ' + parsed.length + ' deals. Loading...';
+
+          setTimeout(() => {
+            modalOverlay.classList.remove('active');
+            btnSave.disabled = false;
+            btnSave.textContent = 'Connect & Load Data';
+            statusMsg.style.display = 'none';
+            loadData();
+          }, 1200);
+
+        } catch (err) {
+          btnSave.disabled = false;
+          btnSave.textContent = 'Connect & Load Data';
+          statusMsg.style.display = 'block';
+          statusMsg.style.color = '#EF4444';
+          statusMsg.textContent = '✗ ' + err.message;
+        }
+      });
+
+      btnDemo.addEventListener('click', function() {
+        localStorage.removeItem('gsheet_csv_url');
+        const statusMsg = document.getElementById('modal-status-msg');
+        statusMsg.style.display = 'none';
+        modalOverlay.classList.remove('active');
+        loadData();
+      });
+
+      // --- RESIZE ---
+      window.addEventListener('resize', function() {
+        scrollY = 0;
+        cardsArea.scrollTop = 0;
+      });
+
+      // --- Cards area scrollable with hidden scrollbar ---
+      cardsArea.style.overflowY = 'scroll';
+      cardsArea.style.overflowX = 'hidden';
+      cardsArea.style.scrollbarWidth = 'none';
+      cardsArea.style.msOverflowStyle = 'none';
+      const styleSheet = document.createElement('style');
+      styleSheet.textContent = '.cards-area::-webkit-scrollbar { display: none; }';
+      document.head.appendChild(styleSheet);
+
+      // --- INITIAL LOAD ---
+      loadData();
+
+    })();
+    </script>
+</body>
+</html>
