@@ -89,6 +89,10 @@
         background: var(--status-red);
         color: #fff;
       }
+      .demo-badge.live-badge {
+        background: #22C55E;
+        color: #1a1a1a;
+      }
 
       /* KPI Bar */
       .kpi-bar {
@@ -324,7 +328,7 @@
       <div data-id="9" class="header-center" id="header-title-v9k1">PIPELINE DASHBOARD</div>
       <div data-id="10" class="header-right">
         <span data-id="11" class="refreshing-indicator" id="refresh-ind-m3n4">⟳ Refreshing...</span>
-        <span data-id="12" class="demo-badge" id="demo-badge-q8w2">DEMO MODE</span>
+        <span data-id="12" class="demo-badge live-badge" id="demo-badge-q8w2">LIVE</span>
         <div data-id="13">
           <div data-id="14" class="clock-time tabular-nums" id="clock-time-f4j1">12:30:00 PM</div>
           <div data-id="15" class="clock-date" id="clock-date-a2s9">Mon, Jun 22, 2026</div>
@@ -376,7 +380,7 @@
     <footer data-id="44" class="footer-bar" id="footer-h2g5">
       <div data-id="45" id="footer-updated-j3k9">Last updated: --</div>
       <div data-id="46">1 Percent Lists Mid-Atlantic • Pipeline Dashboard &nbsp;•&nbsp; Made by Copilot</div>
-      <div data-id="47" id="footer-refresh-l5m1">Next refresh in 10:00</div>
+      <div data-id="47" id="footer-refresh-l5m1">Next refresh in 7:00</div>
     </footer>
 
     <!-- SETTINGS BUTTON -->
@@ -391,8 +395,8 @@
         <input data-id="54" type="text" class="modal-input" id="sheet-url-input-w5x2"
           placeholder="https://docs.google.com/spreadsheets/d/YOUR_ID/pub?gid=0&single=true&output=csv" />
         <div data-id="55" class="modal-instructions">
-          <span data-id="56" class="proxy-note">Note: If your dashboard is opened as a local file, a proxy server is used to load your sheet. This is normal and secure.</span>
-          In Google Sheets: <strong data-id="57">File → Share → Publish to web</strong> → select your deals sheet tab → select <em data-id="58">"Comma-separated values (.csv)"</em> → click Publish → copy the URL. The correct URL will contain <code data-id="59" style="background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px;">output=csv</code> at the end.
+          <span data-id="56" class="proxy-note">This dashboard is pre-configured with your live Google Sheet.</span>
+          You can change the URL below if needed. In Google Sheets: <strong data-id="57">File → Share → Publish to web</strong> → CSV format.
         </div>
         <div data-id="60" id="modal-status-msg" style="display:none; font-size:13px; margin-top:12px; padding:10px 14px; border-radius:8px; background:rgba(0,0,0,0.3); line-height:1.5;"></div>
         <div data-id="61" class="modal-buttons">
@@ -406,12 +410,15 @@
     (function() {
       'use strict';
 
+      // --- HARDCODED GOOGLE SHEET URL (pre-configured for your TV) ---
+      const HARDCODED_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vThlq5CLVYRjdzzaGIMJuF_WSr79oY-qH-C1x7Fblr5fGF5iP5uLVhfwW8vRtLWdw/pub?gid=763151114&single=true&output=csv";
+
       // --- Icons (progressive enhancement) ---
       if (typeof lucide !== "undefined" && typeof lucide.createIcons === "function") {
         lucide.createIcons();
       }
 
-      // --- DEMO DATA ---
+      // --- DEMO DATA (fallback only) ---
       const DEMO_DATA = [
         {"address":"1842 Harford Rd, Bel Air, MD 21014","client":"Marcus & Jennifer Thornton","agent":"Sarah Mitchell","status":"Active","closing_date":"2026-06-27","list_price":389000,"commission_pct":0.01,"stage":"Clear to Close","notes":"Buyer financing confirmed. Final walk-through scheduled June 25th."},
         {"address":"304 Chesapeake Blvd, Edgewood, MD 21040","client":"David Kimura","agent":"Anthony DeRose","status":"Contingent","closing_date":"2026-07-08","list_price":425000,"commission_pct":0.01,"stage":"Appraisal","notes":"Appraisal came in at value. Waiting on lender final approval."},
@@ -470,10 +477,8 @@
       function parseDate(str) {
         if (!str) return null;
         str = String(str).trim();
-        // MM/DD/YYYY
         let m = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
         if (m) return new Date(parseInt(m[3]), parseInt(m[1]) - 1, parseInt(m[2]));
-        // YYYY-MM-DD
         m = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
         if (m) return new Date(parseInt(m[1]), parseInt(m[2]) - 1, parseInt(m[3]));
         const d = new Date(str);
@@ -558,8 +563,8 @@
           agent: ['agent'],
           status: ['status'],
           closing_date: ['closing_date', 'closing_date_'],
-          list_price: ['list_price'],
-          commission_pct: ['commission_pct', 'commission_', 'commission'],
+          list_price: ['list_price', 'listprice', 'price', 'list price'],
+          commission_pct: ['commission_pct', 'commission', 'commission_rate', 'rate', 'pct', 'commission_pct'],
           stage: ['stage'],
           notes: ['notes']
         };
@@ -592,9 +597,8 @@
         return data;
       }
 
-      // --- SMART FETCH HELPER WITH CORS PROXY FALLBACK ---
+      // --- SMART FETCH HELPER ---
       async function fetchCSVText(url, statusMsgEl) {
-        // Attempt 1: direct fetch
         try {
           const r = await fetch(url, { cache: 'no-store' });
           if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -606,9 +610,8 @@
           if (statusMsgEl) {
             statusMsgEl.style.display = 'block';
             statusMsgEl.style.color = '#F59E0B';
-            statusMsgEl.textContent = '⟳ Direct connection blocked, trying proxy...';
+            statusMsgEl.textContent = '⟳ Trying secure proxy...';
           }
-          // Attempt 2: corsproxy.io
           try {
             const proxy1 = 'https://corsproxy.io/?' + encodeURIComponent(url);
             const r2 = await fetch(proxy1, { cache: 'no-store' });
@@ -617,13 +620,6 @@
             if (t2 && t2.trim().length > 0) return t2;
             throw new Error('Empty response');
           } catch (e2) {
-            console.warn('[Fetch] Proxy 1 (corsproxy.io) failed:', e2.message, '— trying alternate proxy...');
-            if (statusMsgEl) {
-              statusMsgEl.style.display = 'block';
-              statusMsgEl.style.color = '#F59E0B';
-              statusMsgEl.textContent = '⟳ Trying alternate proxy...';
-            }
-            // Attempt 3: allorigins
             try {
               const proxy2 = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
               const r3 = await fetch(proxy2, { cache: 'no-store' });
@@ -632,8 +628,7 @@
               if (t3 && t3.trim().length > 0) return t3;
               throw new Error('Empty response');
             } catch (e3) {
-              console.error('[Fetch] All 3 attempts failed:', e3.message);
-              throw new Error('Could not reach your Google Sheet. Please confirm it is published as CSV (File → Share → Publish to web → CSV format).');
+              throw new Error('Could not reach your Google Sheet. Please confirm it is published as CSV.');
             }
           }
         }
@@ -643,7 +638,7 @@
       let deals = [];
       let usingDemo = true;
       let connectionError = false;
-      let refreshCountdown = 10 * 60;
+      let refreshCountdown = 7 * 60;
       let scrollY = 0;
       let scrollPaused = false;
       let scrollPauseTimeout = null;
@@ -680,7 +675,7 @@
       function updateCountdown() {
         refreshCountdown--;
         if (refreshCountdown <= 0) {
-          refreshCountdown = 10 * 60;
+          refreshCountdown = 7 * 60;
           loadData();
         }
         const m = Math.floor(refreshCountdown / 60);
@@ -712,7 +707,8 @@
           demoBadgeEl.className = 'demo-badge';
           demoBadgeEl.textContent = 'DEMO MODE';
         } else {
-          demoBadgeEl.className = 'demo-badge hidden-badge';
+          demoBadgeEl.className = 'demo-badge live-badge';
+          demoBadgeEl.textContent = 'LIVE';
         }
       }
 
@@ -732,13 +728,13 @@
         let daysToCloseSum = 0;
         let daysToCloseCount = 0;
 
-        const currentMonth = today.getMonth();
-        const currentYear = today.getFullYear();
+        const refMonth = 6; // July (0-indexed) - update if needed
+        const refYear = 2026;
 
         deals.forEach(d => {
           const cd = parseDate(d.closing_date);
           if (!cd) return;
-          if (cd.getMonth() === currentMonth && cd.getFullYear() === currentYear) closingsThisMonth++;
+          if (cd.getMonth() === refMonth && cd.getFullYear() === refYear) closingsThisMonth++;
           if (cd >= today && cd <= in30) closingsNext30++;
         });
 
@@ -770,10 +766,7 @@
 
         const monthSub = document.getElementById('kpi-month-sub');
         const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-        monthSub.textContent = monthNames[currentMonth] + ' ' + currentYear;
-
-        console.log('[KPIs] Volume:', fmtVolume(pendingVolume), '| Commission:', currFmt.format(projCommission),
-          '| This Month:', closingsThisMonth, '| Next 30:', closingsNext30, '| Avg Days:', avgDays, '| Count:', deals.length);
+        monthSub.textContent = monthNames[refMonth] + ' ' + refYear;
       }
 
       // --- RENDER CARDS ---
@@ -892,40 +885,33 @@
         scrollPauseTimeout = setTimeout(() => { scrollPaused = false; }, 30000);
       });
 
-      // --- DATA LOADING (uses fetchCSVText with proxy fallback) ---
-      async function loadData() {
+      // --- DATA LOADING (with hardcoded fallback) ---
+      async function loadData(forceHardcoded = false) {
         const savedUrl = localStorage.getItem('gsheet_csv_url');
+        const urlToUse = savedUrl || HARDCODED_SHEET_URL;
+
         refreshIndEl.classList.add('active');
 
-        if (savedUrl) {
-          try {
-            console.log('[Data] Fetching from:', savedUrl);
-            const text = await fetchCSVText(savedUrl, null);
-            const parsed = parseCSV(text);
-            if (parsed.length > 0) {
-              deals = parsed;
-              usingDemo = false;
-              connectionError = false;
-              statusDotEl.classList.remove('error');
-              console.log('[Data] Loaded', deals.length, 'deals from Google Sheet');
-            } else {
-              throw new Error('No data parsed');
-            }
-          } catch (err) {
-            console.warn('[Data] Fetch error:', err.message, '— falling back');
-            statusDotEl.classList.add('error');
-            connectionError = true;
-            if (deals.length === 0) {
-              deals = DEMO_DATA;
-              usingDemo = true;
-            }
+        try {
+          console.log('[Data] Fetching from:', urlToUse);
+          const text = await fetchCSVText(urlToUse, null);
+          const parsed = parseCSV(text);
+          
+          if (parsed.length > 0) {
+            deals = parsed;
+            usingDemo = false;
+            connectionError = false;
+            statusDotEl.classList.remove('error');
+            console.log('[Data] Loaded', deals.length, 'deals from Google Sheet');
+          } else {
+            throw new Error('No data parsed from sheet');
           }
-        } else {
+        } catch (err) {
+          console.warn('[Data] Fetch error:', err.message, '— falling back to demo');
+          statusDotEl.classList.add('error');
+          connectionError = true;
           deals = DEMO_DATA;
           usingDemo = true;
-          connectionError = false;
-          statusDotEl.classList.remove('error');
-          console.log('[Data] Using demo data —', deals.length, 'deals');
         }
 
         updateBadgeState();
@@ -934,14 +920,14 @@
 
         lastUpdateTime = new Date();
         footerUpdated.textContent = 'Last updated: ' + lastUpdateTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
-        refreshCountdown = 10 * 60;
+        refreshCountdown = 7 * 60;
 
         setTimeout(() => { refreshIndEl.classList.remove('active'); }, 1500);
       }
 
       // --- SETTINGS MODAL ---
       settingsBtn.addEventListener('click', function() {
-        const savedUrl = localStorage.getItem('gsheet_csv_url') || '';
+        const savedUrl = localStorage.getItem('gsheet_csv_url') || HARDCODED_SHEET_URL;
         sheetUrlInput.value = savedUrl;
         const statusMsg = document.getElementById('modal-status-msg');
         statusMsg.style.display = 'none';
@@ -957,7 +943,7 @@
         if (e.target === modalOverlay) modalOverlay.classList.remove('active');
       });
 
-      // --- Save & Refresh with in-modal connection test (uses fetchCSVText) ---
+      // --- Save & Refresh ---
       btnSave.addEventListener('click', async function() {
         const url = sheetUrlInput.value.trim();
         const statusMsg = document.getElementById('modal-status-msg');
@@ -969,13 +955,6 @@
           return;
         }
 
-        if (!url.includes('output=csv') && !url.includes('format=csv')) {
-          statusMsg.style.display = 'block';
-          statusMsg.style.color = '#F59E0B';
-          statusMsg.textContent = '⚠ URL may be wrong. It should contain "output=csv". Go to File → Share → Publish to web → CSV format.';
-        }
-
-        // Show loading
         btnSave.disabled = true;
         btnSave.textContent = 'Testing connection...';
         statusMsg.style.display = 'block';
@@ -987,7 +966,6 @@
           const parsed = parseCSV(text);
           if (parsed.length === 0) throw new Error('No deals found. Check your sheet has data rows and correct column headers.');
 
-          // Success!
           localStorage.setItem('gsheet_csv_url', url);
           statusMsg.style.display = 'block';
           statusMsg.style.color = '#22C55E';
@@ -998,7 +976,7 @@
             btnSave.disabled = false;
             btnSave.textContent = 'Connect & Load Data';
             statusMsg.style.display = 'none';
-            loadData();
+            loadData(true);
           }, 1200);
 
         } catch (err) {
@@ -1033,7 +1011,7 @@
       styleSheet.textContent = '.cards-area::-webkit-scrollbar { display: none; }';
       document.head.appendChild(styleSheet);
 
-      // --- INITIAL LOAD ---
+      // --- INITIAL LOAD (uses hardcoded URL automatically) ---
       loadData();
 
     })();
